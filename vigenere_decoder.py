@@ -1,20 +1,39 @@
+# The index of coincidence of English
 ENGLISH_IC = 0.0686
+# The English alphabet, in order
 ALPHABET = ["A", "B", "C", "D", "E", "F", "G", "H", "I", "J", "K", "L", "M", "N", "O", "P", "Q", "R", "S", "T", "U", "V", "W", "X", "Y", "Z"]
 
 
 def vigenere_encrypt(plaintext, key):
+    """Encrypts a given plaintext using the given key
+
+    Parameters:
+    plaintext (String): The text to be encrypted, in plain English
+    key (String): The key to be used in the vigenere encryption
     
+    Returns:
+    ciphertext (String): The encrypted plaintext using the key
+    """
+    # Format plaintext and key
     plaintext = plaintext.strip().replace(" ", "").replace("\n", "").upper()
     key = key.upper()
     
     ciphertext_chars = []
     for i, char in enumerate(plaintext):
+        # Add index of key to index of character, modulo 26
         char_index = (ALPHABET.index(key[i%len(key)]) + ALPHABET.index(char)) % len(ALPHABET)
         ciphertext_chars += ALPHABET[char_index]
     return "".join(ciphertext_chars)
 
 def get_frequencies(text):
+    """Gets the number of occurrences of each character in a given text
+
+    Parameters:
+    text (String): The text to count the frequencies of
     
+    Returns:
+    frequencies (Dictionary): A mapping of each character to the number of occurences in the text
+    """
     frequencies = {}
 
     for char in text:
@@ -23,6 +42,14 @@ def get_frequencies(text):
 
 
 def ic(frequencies):
+    """Calculates the index of coincidence (the likelihood it is to draw two matching letters at random) of a text given its character frequencies
+
+    Parameters:
+    frequencies (Dictionary): A dictionary representing character frequencies of a text
+    
+    Returns:
+    ic (Float): The index of coincidence of the given text frequencies
+    """
     total_length = 0
     top_sum = 0
 
@@ -36,23 +63,44 @@ def ic(frequencies):
 
 
 def get_ic(ciphertext, n):
+    """Calculates the index of coincidence of a ciphertext at the given guess of key length
+
+    Parameters:
+    ciphertext (String): A section of encrypted text
+    n (Integer): The guessed length of the key used to encrypt the text
+    
+    Returns:
+    ic (Float): The index of coincidence of the ciphertext with the given key length (the average by character of the key)
+    """
     total_ic = 0
 
     for i in range(n):
+        # Split ciphertext into sets of characters encrypted by the same character of the key
         split = ciphertext[i::n]
+        # Add up the IC scores of all sets of key characters
         frequencies = get_frequencies(split)
         total_ic += ic(frequencies)
-
+    # Return average IC score
     return total_ic / n
 
 
-def main(ciphertext, guesses):
+def guess_key_length(ciphertext, guesses):
+    """Guesses the key length used to encrypt a ciphertext from the list of guesses, by finding the closest IC score to English
+
+    Parameters:
+    ciphertext (String): A section of encrypted text
+    guesses (List): A list of key lengths to guess
     
+    Returns:
+    best_guess: The most likely guess based on the IC score difference with English
+    best_ic (Float): The index of coincidence of the ciphertext with the given key length (the average by character of the key)
+    """
     ciphertext = ciphertext.replace(" ", "").strip().replace("\n", "").upper()
 
     best_guess = 0
     best_ic = 99999
 
+    # Get guess by minimising IC difference with English, save best guess and minimum score
     for guess in guesses:
         current_ic = get_ic(ciphertext, guess)
         ic_diff = abs(current_ic - ENGLISH_IC)
@@ -63,7 +111,7 @@ def main(ciphertext, guesses):
 
     return best_guess, best_ic 
 
-
+# Ciphertext used to test code (from "The Tell-Tale Heart")
 ciphertext = vigenere_encrypt("""
                               True nervous very very dreadfully nervous I had been and am but why will you say that I am mad The disease had sharpened my senses not destroyed not dulled them Above all was the sense of hearing acute I heard all things in the heaven and in the earth I heard many things in hell How then am I mad Hearken and observe how healthily how calmly I can tell you the whole story
 
@@ -88,10 +136,12 @@ And now have I not told you that what you mistake for madness is but over acuten
 But even yet I refrained and kept still I scarcely breathed I held the lantern motionless I tried how steadily I could maintain the ray upon the eye Meantime the hellish tattoo of the heart increased It grew quicker and quicker and louder and louder every instant The old mans terror must have been extreme It grew louder I say louder every moment do you mark me well I have told you that I am nervous so I am And now at the dead hour of the night amid the dreadful silence of that old house so strange a noise as this excited me to uncontrollable terror Yet for some minutes longer I refrained and stood still But the beating grew louder louder I thought the heart must burst And now a new anxiety seized me the sound would be heard by a neighbor The old mans hour had come With a loud yell I threw open the lantern and leaped into the room He shrieked once once only In an instant I dragged him to the floor and pulled the heavy bed over him I then smiled gaily to find the deed so far done But for many minutes the heart beat on with a muffled sound This however did not vex me it would not be heard through the wall At length it ceased The old man was dead I removed the bed and examined the corpse Yes he was stone stone dead I placed my hand upon the heart and held it there many minutes There was no pulsation He was stone dead His eye would trouble me no more
 
 If still you think me mad you will think so no longer when I describe the wise precautions I took for the concealment of the body The night waned and I worked hastily but in silence First of all I dismembered the corpse I cut off the head and the arms and the 
-legs""", "LEMONS")
+legs""", "CODING")
 
+#List of key length guesses to try
 guesses = [2,3,4,5,6,7,8,9]
 
-predicted_n, ic_diff = main(ciphertext, guesses)
+#Get best guess for key length and IC score difference with English
+predicted_n, ic_diff = guess_key_length(ciphertext, guesses)
 print("Most likely key length:", predicted_n)
 print("IC score difference:", ic_diff)
